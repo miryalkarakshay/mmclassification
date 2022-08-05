@@ -2,8 +2,13 @@
 
 import torch.nn as nn
 import torch.utils.checkpoint as cp
-from mmcv.cnn import (ConvModule, build_activation_layer, build_conv_layer,
-                      build_norm_layer, constant_init)
+from mmcv.cnn import (
+    ConvModule,
+    build_activation_layer,
+    build_conv_layer,
+    build_norm_layer,
+    constant_init,
+)
 from mmcv.cnn.bricks import DropPath
 from mmcv.runner import BaseModule
 from mmcv.utils.parrots_wrapper import _BatchNorm
@@ -37,20 +42,22 @@ class BasicBlock(BaseModule):
             Default: dict(type='BN')
     """
 
-    def __init__(self,
-                 in_channels,
-                 out_channels,
-                 expansion=1,
-                 stride=1,
-                 dilation=1,
-                 downsample=None,
-                 style='pytorch',
-                 with_cp=False,
-                 conv_cfg=None,
-                 norm_cfg=dict(type='BN'),
-                 drop_path_rate=0.0,
-                 act_cfg=dict(type='ReLU', inplace=True),
-                 init_cfg=None):
+    def __init__(
+        self,
+        in_channels,
+        out_channels,
+        expansion=1,
+        stride=1,
+        dilation=1,
+        downsample=None,
+        style="pytorch",
+        with_cp=False,
+        conv_cfg=None,
+        norm_cfg=dict(type="BN"),
+        drop_path_rate=0.0,
+        act_cfg=dict(type="ReLU", inplace=True),
+        init_cfg=None,
+    ):
         super(BasicBlock, self).__init__(init_cfg=init_cfg)
         self.in_channels = in_channels
         self.out_channels = out_channels
@@ -66,9 +73,9 @@ class BasicBlock(BaseModule):
         self.norm_cfg = norm_cfg
 
         self.norm1_name, norm1 = build_norm_layer(
-            norm_cfg, self.mid_channels, postfix=1)
-        self.norm2_name, norm2 = build_norm_layer(
-            norm_cfg, out_channels, postfix=2)
+            norm_cfg, self.mid_channels, postfix=1
+        )
+        self.norm2_name, norm2 = build_norm_layer(norm_cfg, out_channels, postfix=2)
 
         self.conv1 = build_conv_layer(
             conv_cfg,
@@ -78,21 +85,21 @@ class BasicBlock(BaseModule):
             stride=stride,
             padding=dilation,
             dilation=dilation,
-            bias=False)
+            bias=False,
+        )
         self.add_module(self.norm1_name, norm1)
         self.conv2 = build_conv_layer(
-            conv_cfg,
-            self.mid_channels,
-            out_channels,
-            3,
-            padding=1,
-            bias=False)
+            conv_cfg, self.mid_channels, out_channels, 3, padding=1, bias=False
+        )
         self.add_module(self.norm2_name, norm2)
 
         self.relu = build_activation_layer(act_cfg)
         self.downsample = downsample
-        self.drop_path = DropPath(drop_prob=drop_path_rate
-                                  ) if drop_path_rate > eps else nn.Identity()
+        self.drop_path = (
+            DropPath(drop_prob=drop_path_rate)
+            if drop_path_rate > eps
+            else nn.Identity()
+        )
 
     @property
     def norm1(self):
@@ -103,7 +110,6 @@ class BasicBlock(BaseModule):
         return getattr(self, self.norm2_name)
 
     def forward(self, x):
-
         def _inner_forward(x):
             identity = x
 
@@ -156,22 +162,24 @@ class Bottleneck(BaseModule):
             Default: dict(type='BN')
     """
 
-    def __init__(self,
-                 in_channels,
-                 out_channels,
-                 expansion=4,
-                 stride=1,
-                 dilation=1,
-                 downsample=None,
-                 style='pytorch',
-                 with_cp=False,
-                 conv_cfg=None,
-                 norm_cfg=dict(type='BN'),
-                 act_cfg=dict(type='ReLU', inplace=True),
-                 drop_path_rate=0.0,
-                 init_cfg=None):
+    def __init__(
+        self,
+        in_channels,
+        out_channels,
+        expansion=4,
+        stride=1,
+        dilation=1,
+        downsample=None,
+        style="pytorch",
+        with_cp=False,
+        conv_cfg=None,
+        norm_cfg=dict(type="BN"),
+        act_cfg=dict(type="ReLU", inplace=True),
+        drop_path_rate=0.0,
+        init_cfg=None,
+    ):
         super(Bottleneck, self).__init__(init_cfg=init_cfg)
-        assert style in ['pytorch', 'caffe']
+        assert style in ["pytorch", "caffe"]
 
         self.in_channels = in_channels
         self.out_channels = out_channels
@@ -185,7 +193,7 @@ class Bottleneck(BaseModule):
         self.conv_cfg = conv_cfg
         self.norm_cfg = norm_cfg
 
-        if self.style == 'pytorch':
+        if self.style == "pytorch":
             self.conv1_stride = 1
             self.conv2_stride = stride
         else:
@@ -193,11 +201,12 @@ class Bottleneck(BaseModule):
             self.conv2_stride = 1
 
         self.norm1_name, norm1 = build_norm_layer(
-            norm_cfg, self.mid_channels, postfix=1)
+            norm_cfg, self.mid_channels, postfix=1
+        )
         self.norm2_name, norm2 = build_norm_layer(
-            norm_cfg, self.mid_channels, postfix=2)
-        self.norm3_name, norm3 = build_norm_layer(
-            norm_cfg, out_channels, postfix=3)
+            norm_cfg, self.mid_channels, postfix=2
+        )
+        self.norm3_name, norm3 = build_norm_layer(norm_cfg, out_channels, postfix=3)
 
         self.conv1 = build_conv_layer(
             conv_cfg,
@@ -205,7 +214,8 @@ class Bottleneck(BaseModule):
             self.mid_channels,
             kernel_size=1,
             stride=self.conv1_stride,
-            bias=False)
+            bias=False,
+        )
         self.add_module(self.norm1_name, norm1)
         self.conv2 = build_conv_layer(
             conv_cfg,
@@ -215,21 +225,22 @@ class Bottleneck(BaseModule):
             stride=self.conv2_stride,
             padding=dilation,
             dilation=dilation,
-            bias=False)
+            bias=False,
+        )
 
         self.add_module(self.norm2_name, norm2)
         self.conv3 = build_conv_layer(
-            conv_cfg,
-            self.mid_channels,
-            out_channels,
-            kernel_size=1,
-            bias=False)
+            conv_cfg, self.mid_channels, out_channels, kernel_size=1, bias=False
+        )
         self.add_module(self.norm3_name, norm3)
 
         self.relu = build_activation_layer(act_cfg)
         self.downsample = downsample
-        self.drop_path = DropPath(drop_prob=drop_path_rate
-                                  ) if drop_path_rate > eps else nn.Identity()
+        self.drop_path = (
+            DropPath(drop_prob=drop_path_rate)
+            if drop_path_rate > eps
+            else nn.Identity()
+        )
 
     @property
     def norm1(self):
@@ -244,7 +255,6 @@ class Bottleneck(BaseModule):
         return getattr(self, self.norm3_name)
 
     def forward(self, x):
-
         def _inner_forward(x):
             identity = x
 
@@ -299,16 +309,16 @@ def get_expansion(block, expansion=None):
     if isinstance(expansion, int):
         assert expansion > 0
     elif expansion is None:
-        if hasattr(block, 'expansion'):
+        if hasattr(block, "expansion"):
             expansion = block.expansion
-        elif issubclass(block, BasicBlock):
+        elif issubclass(block, BasicBlock) or issubclass(block, EcaBasicBlock):
             expansion = 1
-        elif issubclass(block, Bottleneck):
+        elif issubclass(block, Bottleneck) or issubclass(block, EcaBottleneck):
             expansion = 4
         else:
-            raise TypeError(f'expansion is not specified for {block.__name__}')
+            raise TypeError(f"expansion is not specified for {block.__name__}")
     else:
-        raise TypeError('expansion must be an integer or None')
+        raise TypeError("expansion must be an integer or None")
 
     return expansion
 
@@ -335,17 +345,19 @@ class ResLayer(nn.Sequential):
             Default: dict(type='BN')
     """
 
-    def __init__(self,
-                 block,
-                 num_blocks,
-                 in_channels,
-                 out_channels,
-                 expansion=None,
-                 stride=1,
-                 avg_down=False,
-                 conv_cfg=None,
-                 norm_cfg=dict(type='BN'),
-                 **kwargs):
+    def __init__(
+        self,
+        block,
+        num_blocks,
+        in_channels,
+        out_channels,
+        expansion=None,
+        stride=1,
+        avg_down=False,
+        conv_cfg=None,
+        norm_cfg=dict(type="BN"),
+        **kwargs,
+    ):
         self.block = block
         self.expansion = get_expansion(block, expansion)
 
@@ -360,17 +372,22 @@ class ResLayer(nn.Sequential):
                         kernel_size=stride,
                         stride=stride,
                         ceil_mode=True,
-                        count_include_pad=False))
-            downsample.extend([
-                build_conv_layer(
-                    conv_cfg,
-                    in_channels,
-                    out_channels,
-                    kernel_size=1,
-                    stride=conv_stride,
-                    bias=False),
-                build_norm_layer(norm_cfg, out_channels)[1]
-            ])
+                        count_include_pad=False,
+                    )
+                )
+            downsample.extend(
+                [
+                    build_conv_layer(
+                        conv_cfg,
+                        in_channels,
+                        out_channels,
+                        kernel_size=1,
+                        stride=conv_stride,
+                        bias=False,
+                    ),
+                    build_norm_layer(norm_cfg, out_channels)[1],
+                ]
+            )
             downsample = nn.Sequential(*downsample)
 
         layers = []
@@ -383,7 +400,9 @@ class ResLayer(nn.Sequential):
                 downsample=downsample,
                 conv_cfg=conv_cfg,
                 norm_cfg=norm_cfg,
-                **kwargs))
+                **kwargs,
+            )
+        )
         in_channels = out_channels
         for i in range(1, num_blocks):
             layers.append(
@@ -394,7 +413,9 @@ class ResLayer(nn.Sequential):
                     stride=1,
                     conv_cfg=conv_cfg,
                     norm_cfg=norm_cfg,
-                    **kwargs))
+                    **kwargs,
+                )
+            )
         super(ResLayer, self).__init__(*layers)
 
 
@@ -456,39 +477,38 @@ class ResNet(BaseBackbone):
         34: (BasicBlock, (3, 4, 6, 3)),
         50: (Bottleneck, (3, 4, 6, 3)),
         101: (Bottleneck, (3, 4, 23, 3)),
-        152: (Bottleneck, (3, 8, 36, 3))
+        152: (Bottleneck, (3, 8, 36, 3)),
     }
 
-    def __init__(self,
-                 depth,
-                 in_channels=3,
-                 stem_channels=64,
-                 base_channels=64,
-                 expansion=None,
-                 num_stages=4,
-                 strides=(1, 2, 2, 2),
-                 dilations=(1, 1, 1, 1),
-                 out_indices=(3, ),
-                 style='pytorch',
-                 deep_stem=False,
-                 avg_down=False,
-                 frozen_stages=-1,
-                 conv_cfg=None,
-                 norm_cfg=dict(type='BN', requires_grad=True),
-                 norm_eval=False,
-                 with_cp=False,
-                 zero_init_residual=True,
-                 init_cfg=[
-                     dict(type='Kaiming', layer=['Conv2d']),
-                     dict(
-                         type='Constant',
-                         val=1,
-                         layer=['_BatchNorm', 'GroupNorm'])
-                 ],
-                 drop_path_rate=0.0):
+    def __init__(
+        self,
+        depth,
+        in_channels=3,
+        stem_channels=64,
+        base_channels=64,
+        expansion=None,
+        num_stages=4,
+        strides=(1, 2, 2, 2),
+        dilations=(1, 1, 1, 1),
+        out_indices=(3,),
+        style="pytorch",
+        deep_stem=False,
+        avg_down=False,
+        frozen_stages=-1,
+        conv_cfg=None,
+        norm_cfg=dict(type="BN", requires_grad=True),
+        norm_eval=False,
+        with_cp=False,
+        zero_init_residual=True,
+        init_cfg=[
+            dict(type="Kaiming", layer=["Conv2d"]),
+            dict(type="Constant", val=1, layer=["_BatchNorm", "GroupNorm"]),
+        ],
+        drop_path_rate=0.0,
+    ):
         super(ResNet, self).__init__(init_cfg)
         if depth not in self.arch_settings:
-            raise KeyError(f'invalid depth {depth} for resnet')
+            raise KeyError(f"invalid depth {depth} for resnet")
         self.depth = depth
         self.stem_channels = stem_channels
         self.base_channels = base_channels
@@ -533,10 +553,11 @@ class ResNet(BaseBackbone):
                 with_cp=with_cp,
                 conv_cfg=conv_cfg,
                 norm_cfg=norm_cfg,
-                drop_path_rate=drop_path_rate)
+                drop_path_rate=drop_path_rate,
+            )
             _in_channels = _out_channels
             _out_channels *= 2
-            layer_name = f'layer{i + 1}'
+            layer_name = f"layer{i + 1}"
             self.add_module(layer_name, res_layer)
             self.res_layers.append(layer_name)
 
@@ -562,7 +583,8 @@ class ResNet(BaseBackbone):
                     padding=1,
                     conv_cfg=self.conv_cfg,
                     norm_cfg=self.norm_cfg,
-                    inplace=True),
+                    inplace=True,
+                ),
                 ConvModule(
                     stem_channels // 2,
                     stem_channels // 2,
@@ -571,7 +593,8 @@ class ResNet(BaseBackbone):
                     padding=1,
                     conv_cfg=self.conv_cfg,
                     norm_cfg=self.norm_cfg,
-                    inplace=True),
+                    inplace=True,
+                ),
                 ConvModule(
                     stem_channels // 2,
                     stem_channels,
@@ -580,7 +603,9 @@ class ResNet(BaseBackbone):
                     padding=1,
                     conv_cfg=self.conv_cfg,
                     norm_cfg=self.norm_cfg,
-                    inplace=True))
+                    inplace=True,
+                ),
+            )
         else:
             self.conv1 = build_conv_layer(
                 self.conv_cfg,
@@ -589,9 +614,11 @@ class ResNet(BaseBackbone):
                 kernel_size=7,
                 stride=2,
                 padding=3,
-                bias=False)
+                bias=False,
+            )
             self.norm1_name, norm1 = build_norm_layer(
-                self.norm_cfg, stem_channels, postfix=1)
+                self.norm_cfg, stem_channels, postfix=1
+            )
             self.add_module(self.norm1_name, norm1)
             self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
@@ -609,7 +636,7 @@ class ResNet(BaseBackbone):
                         param.requires_grad = False
 
         for i in range(1, self.frozen_stages + 1):
-            m = getattr(self, f'layer{i}')
+            m = getattr(self, f"layer{i}")
             m.eval()
             for param in m.parameters():
                 param.requires_grad = False
@@ -617,8 +644,7 @@ class ResNet(BaseBackbone):
     def init_weights(self):
         super(ResNet, self).init_weights()
 
-        if (isinstance(self.init_cfg, dict)
-                and self.init_cfg['type'] == 'Pretrained'):
+        if isinstance(self.init_cfg, dict) and self.init_cfg["type"] == "Pretrained":
             # Suppress zero_init_residual if use pretrained model.
             return
 
@@ -667,8 +693,7 @@ class ResNetV1c(ResNet):
     """
 
     def __init__(self, **kwargs):
-        super(ResNetV1c, self).__init__(
-            deep_stem=True, avg_down=False, **kwargs)
+        super(ResNetV1c, self).__init__(deep_stem=True, avg_down=False, **kwargs)
 
 
 @BACKBONES.register_module()
@@ -684,5 +709,4 @@ class ResNetV1d(ResNet):
     """
 
     def __init__(self, **kwargs):
-        super(ResNetV1d, self).__init__(
-            deep_stem=True, avg_down=True, **kwargs)
+        super(ResNetV1d, self).__init__(deep_stem=True, avg_down=True, **kwargs)
